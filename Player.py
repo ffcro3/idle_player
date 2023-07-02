@@ -6,9 +6,7 @@ import asyncio
 import time
 import os
 import sys
-import cv2
 import pytesseract
-import logging
 
 nest_asyncio.apply()
 pyautogui.useImageNotFoundException()
