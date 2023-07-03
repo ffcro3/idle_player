@@ -7,9 +7,21 @@ import time
 import os
 import sys
 import pytesseract
+import cv2
+
 
 nest_asyncio.apply()
 pyautogui.useImageNotFoundException()
+
+
+async def draw_area(x, y):
+    start_point = (x, y)
+    end_point = (50, 50)
+    color = (255, 0, 0)
+    thickness = 2
+    cv2.rectangle(start_point, end_point, color, thickness)
+    time.sleep(0.1)
+    cv2.destroyAllWindows()
 
 
 async def getCash(round, cash):
@@ -55,6 +67,11 @@ async def getSouls(round, soul):
 async def Run():
     # NOME DO ARQUIVO
     run = "run.png"
+    coin = "coin.png"
+    box = "box.png"
+    mushroom = "mushroom.png"
+    waspbee = "wasp_bee.png"
+    collectables = [run, coin, box, mushroom, waspbee]
     x = True
     tentativa = 0
     jumps = 0
@@ -68,27 +85,84 @@ async def Run():
         # await getCash(tentativa, cash_values)
         # await getSouls(tentativa, souls_values)
 
-        try:
-            if os.path.exists(run):
-                pyautogui.locateOnScreen(
-                    run, confidence=0.99, grayscale=True, region=(649, 698, 200, 200)
-                )  # type: ignore
-                print("clicking on run...")
+        for item in collectables:
 
-                pyautogui.click(x=762, y=798)
-                runs = runs + 1
-                time.sleep(1)
+            try:
 
-        except KeyboardInterrupt:
-            break
+                if item == "run.png":
 
-        except pyautogui.ImageNotFoundException:
-            print("jumping for money...")
-            jumps = jumps + 1
-            pyautogui.mouseDown(x=964, y=783)
-            time.sleep(0.02)
-            pyautogui.mouseUp(x=964, y=783)
-            continue
+                    finder = pyautogui.locateOnScreen(
+                        item, confidence=0.99, grayscale=True, region=(648, 152, 1280, 720)
+                    )  # type: ignore
+
+                    if finder.width != 0:
+                        # await draw_area(finder.width, finder.height)
+                        print('BOOST!')
+                        pyautogui.click(x=762, y=798)
+                        pyautogui.press('space')
+                        pyautogui.moveTo(x=1175, y=798)
+                        jumps = jumps + 1
+                        runs = runs + 1
+
+                if item == "box.png":
+                    finder = pyautogui.locateOnScreen(
+                        item, confidence=0.5, grayscale=True, region=(649, 152, 1280, 720)
+                    )  # type: ignore
+
+                    if finder.width != 0:
+                        print('BOX!')
+                        # await draw_area(finder.width, finder.height)
+                        time.sleep(0.05)
+                        pyautogui.press('space')
+                        runs = runs + 1
+                        jumps = jumps + 1
+
+                if item == "coin.png":
+                    finder = pyautogui.locateOnScreen(
+                        item, confidence=0.5, grayscale=True, region=(649, 152, 1280, 720)
+                    )  # type: ignore
+
+                    if finder.width != 0:
+                        print('COIN!')
+                        # await draw_area(finder.width, finder.height)
+                        time.sleep(0.2)
+                        pyautogui.press('space')
+                        runs = runs + 1
+                        jumps = jumps + 1
+
+                if item == "mushroom.png":
+
+                    finder = pyautogui.locateOnScreen(
+                        item, confidence=0.6, grayscale=True, region=(648, 152, 1280, 720)
+                    )  # type: ignore
+
+                    if finder.width != 0:
+                        print("MUSHROOM!")
+                        # await draw_area(finder.width, finder.height)
+                        time.sleep(2)
+
+                if item == "wasp_bee.png":
+
+                    finder = pyautogui.locateOnScreen(
+                        item, confidence=0.5, grayscale=True, region=(648, 152, 1280, 720)
+                    )  # type: ignore
+
+                    if finder.width != 0:
+                        print('WASP/BEE!')
+                        # await draw_area(finder.width, finder.height)
+                        time.sleep(0.3)
+                        pyautogui.press('space')
+                        runs = runs + 1
+                        jumps = jumps + 1
+
+                else:
+                    raise pyautogui.ImageNotFoundException()
+
+            except KeyboardInterrupt:
+                break
+
+            except pyautogui.ImageNotFoundException:
+                continue
 
     alert(text="Total Jumps: {}. Total Boosts: {}. Total de Ações: {}".format(
         jumps, runs, tentativa), title="Game Finished!", button="OK")
