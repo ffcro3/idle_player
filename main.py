@@ -1,10 +1,19 @@
 import cv2
 from tracker import *
+import imutils
+import argparse
+import numpy as np
 
 # Create tracker object
 tracker = EuclideanDistTracker()
 
 cap = cv2.VideoCapture("slayer_final.mp4")
+img_rgb = cv2.imread('coin.png')
+assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+template = cv2.imread('coin.png', cv2.IMREAD_GRAYSCALE)
+w, h = template.shape[::-1]
+coin = 0
 
 # Object detection from Stable camera
 object_detector = cv2.createBackgroundSubtractorMOG2(
@@ -15,7 +24,7 @@ while True:
     height, width, _ = frame.shape
 
     # Extract Region of interest
-    roi = frame[150: 400, 200: 400]
+    roi = frame[120: 430, 200: 400]
 
     # 1. Object Detection
     mask = object_detector.apply(roi)
@@ -23,22 +32,23 @@ while True:
     contours, _ = cv2.findContours(
         mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     detections = []
+    coins = []
+    cv2.putText(
+        roi, 'Coins: 0', (150, 0-100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
     for cnt in contours:
         # Calculate area and remove small elements
         area = cv2.contourArea(cnt)
         if area > 1298:
-            # cv2.drawContours(roi, [cnt], -1, (0, 255, 0), 2)
-            x, y, w, h = cv2.boundingRect(cnt)
-
-            detections.append([x, y, w, h])
-
-    # 2. Object Tracking
-    boxes_ids = tracker.update(detections)
-    for box_id in boxes_ids:
-        x, y, w, h, id = box_id
-        cv2.putText(roi, str(id), (x, y - 15),
-                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
-        cv2.rectangle(roi, (x, y), (x + w, y + h), (0, 255, 0), 3)
+            res = cv2.matchTemplate(img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.5124
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                coin = coin + 1
+                coins_text = 'Coins: '.format(coin)
+                cv2.rectangle(
+                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                cv2.putText(
+                    roi, 'Coin', (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
     cv2.imshow("roi", roi)
     cv2.imshow("Frame", frame)

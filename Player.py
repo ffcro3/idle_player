@@ -8,164 +8,78 @@ import os
 import sys
 import pytesseract
 import cv2
+import numpy as np
+import pyautogui
 
 
-nest_asyncio.apply()
-pyautogui.useImageNotFoundException()
+class Player:
 
+    def __init__(self):
+        pyautogui.useImageNotFoundException()
 
-async def draw_area(x, y):
-    start_point = (x, y)
-    end_point = (50, 50)
-    color = (255, 0, 0)
-    thickness = 2
-    cv2.rectangle(start_point, end_point, color, thickness)
-    time.sleep(0.1)
-    cv2.destroyAllWindows()
+    def jump(self):
+        pyautogui.keyDown('space')
+        pyautogui.keyUp('space')
 
+    def boost(self, x, y):
+        # pyautogui.press('shiftleft')
+        self.jump()
+        pyautogui.click(x + 60, y + 160)
+        pyautogui.moveTo(x + 100, y)
 
-async def getCash(round, cash):
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    cash_status = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'txt', 'current_cash.txt')
-    stats_im = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'images', 'cash', 'cash_{}.png'.format(round))
-    current_cash = pyautogui.screenshot(region=(1185, 216, 100, 40))
-    # current_cash.save(stats_im)
-    value_cash = pytesseract.image_to_string(current_cash)
-    with open(cash_status, 'a', encoding='utf-8') as f:
-        if round == 1:
-            cash[0] = value_cash
-            f.write('Current Cash: {}\n'.format(cash))
-            print(cash)
-        else:
-            cash[1] = value_cash
-            f.write('Current Cash: {}\n'.format(cash))
-            print(cash)
+    def identifyBoost(self, screen):
+        run = "run.png"
+        img_rgb = cv2.imread(run)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        try:
+            res = cv2.matchTemplate(
+                img_rgb, screen, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.99
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                return pt
+        except:
+            print("Run not found")
 
+    def identifyCoin(self, mask, roi):
+        coin = "coin.png"
+        img_rgb = cv2.imread(coin)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(coin, cv2.IMREAD_GRAYSCALE)
+        w, h = template.shape[::-1]
+        try:
+            res = cv2.matchTemplate(
+                img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.5125
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                cv2.rectangle(
+                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                cv2.putText(
+                    roi, coin, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                return coin
+        except:
+            print("Coin not found")
 
-async def getSouls(round, soul):
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    souls_status = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'txt', 'current_souls.txt')
-    stats_im = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'images', 'soul', 'souls_{}.png'.format(round))
-    current_souls = pyautogui.screenshot(region=(1765, 219, 70, 33))
-    # current_souls.save(stats_im)
-    value_soul = pytesseract.image_to_string(current_souls, )
-    with open(souls_status, 'a', encoding='utf-8') as f:  # type: ignore
-        if round == 1:
-            soul[0] = value_soul
-            f.write('Current Souls: {}\n'.format(soul))
-            print(soul)
-        else:
-            soul[1] = value_soul
-            f.write('Current Souls: {}\n'.format(soul))
-            print(soul)
+    def identifyBox(self, mask, roi):
+        box = "box.png"
+        img_rgb = cv2.imread(box)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(box, cv2.IMREAD_GRAYSCALE)
+        w, h = template.shape[::-1]
+        try:
+            res = cv2.matchTemplate(
+                img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.53
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                cv2.rectangle(
+                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                cv2.putText(
+                    roi, box, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                return box
 
-
-async def Run():
-    # NOME DO ARQUIVO
-    run = "run.png"
-    coin = "coin.png"
-    box = "box.png"
-    mushroom = "mushroom.png"
-    waspbee = "wasp_bee.png"
-    collectables = [run, coin, box, mushroom, waspbee]
-    x = True
-    tentativa = 0
-    jumps = 0
-    runs = 0
-    cash_values = [0, 0]
-    souls_values = [0, 0]
-
-    while x == True:
-        tentativa = tentativa + 1
-        print('Tentativa: ', tentativa)
-        # await getCash(tentativa, cash_values)
-        # await getSouls(tentativa, souls_values)
-
-        for item in collectables:
-
-            try:
-
-                if item == "run.png":
-
-                    finder = pyautogui.locateOnScreen(
-                        item, confidence=0.99, grayscale=True, region=(648, 152, 1280, 720)
-                    )  # type: ignore
-
-                    if finder.width != 0:
-                        # await draw_area(finder.width, finder.height)
-                        print('BOOST!')
-                        pyautogui.click(x=762, y=798)
-                        pyautogui.press('space')
-                        pyautogui.moveTo(x=1175, y=798)
-                        jumps = jumps + 1
-                        runs = runs + 1
-
-                if item == "box.png":
-                    finder = pyautogui.locateOnScreen(
-                        item, confidence=0.5, grayscale=True, region=(649, 152, 1280, 720)
-                    )  # type: ignore
-
-                    if finder.width != 0:
-                        print('BOX!')
-                        # await draw_area(finder.width, finder.height)
-                        time.sleep(0.05)
-                        pyautogui.press('space')
-                        runs = runs + 1
-                        jumps = jumps + 1
-
-                if item == "coin.png":
-                    finder = pyautogui.locateOnScreen(
-                        item, confidence=0.5, grayscale=True, region=(649, 152, 1280, 720)
-                    )  # type: ignore
-
-                    if finder.width != 0:
-                        print('COIN!')
-                        # await draw_area(finder.width, finder.height)
-                        time.sleep(0.2)
-                        pyautogui.press('space')
-                        runs = runs + 1
-                        jumps = jumps + 1
-
-                if item == "mushroom.png":
-
-                    finder = pyautogui.locateOnScreen(
-                        item, confidence=0.6, grayscale=True, region=(648, 152, 1280, 720)
-                    )  # type: ignore
-
-                    if finder.width != 0:
-                        print("MUSHROOM!")
-                        # await draw_area(finder.width, finder.height)
-                        time.sleep(2)
-
-                if item == "wasp_bee.png":
-
-                    finder = pyautogui.locateOnScreen(
-                        item, confidence=0.5, grayscale=True, region=(648, 152, 1280, 720)
-                    )  # type: ignore
-
-                    if finder.width != 0:
-                        print('WASP/BEE!')
-                        # await draw_area(finder.width, finder.height)
-                        time.sleep(0.3)
-                        pyautogui.press('space')
-                        runs = runs + 1
-                        jumps = jumps + 1
-
-                else:
-                    raise pyautogui.ImageNotFoundException()
-
-            except KeyboardInterrupt:
-                break
-
-            except pyautogui.ImageNotFoundException:
-                continue
-
-    alert(text="Total Jumps: {}. Total Boosts: {}. Total de Ações: {}".format(
-        jumps, runs, tentativa), title="Game Finished!", button="OK")
-    sys.exit(0)
-
-asyncio.run(Run())
+        except:
+            print("Box not found")
