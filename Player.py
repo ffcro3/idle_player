@@ -7,91 +7,79 @@ import time
 import os
 import sys
 import pytesseract
-
-nest_asyncio.apply()
-pyautogui.useImageNotFoundException()
-
-
-async def getCash(round, cash):
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    cash_status = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'txt', 'current_cash.txt')
-    stats_im = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'images', 'cash', 'cash_{}.png'.format(round))
-    current_cash = pyautogui.screenshot(region=(1185, 216, 100, 40))
-    # current_cash.save(stats_im)
-    value_cash = pytesseract.image_to_string(current_cash)
-    with open(cash_status, 'a', encoding='utf-8') as f:
-        if round == 1:
-            cash[0] = value_cash
-            f.write('Current Cash: {}\n'.format(cash))
-            print(cash)
-        else:
-            cash[1] = value_cash
-            f.write('Current Cash: {}\n'.format(cash))
-            print(cash)
+import cv2
+import numpy as np
+import pyautogui
 
 
-async def getSouls(round, soul):
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    souls_status = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'txt', 'current_souls.txt')
-    stats_im = os.path.join(os.path.abspath(
-        ''), "images", 'stats', 'images', 'soul', 'souls_{}.png'.format(round))
-    current_souls = pyautogui.screenshot(region=(1765, 219, 70, 33))
-    # current_souls.save(stats_im)
-    value_soul = pytesseract.image_to_string(current_souls, )
-    with open(souls_status, 'a', encoding='utf-8') as f:  # type: ignore
-        if round == 1:
-            soul[0] = value_soul
-            f.write('Current Souls: {}\n'.format(soul))
-            print(soul)
-        else:
-            soul[1] = value_soul
-            f.write('Current Souls: {}\n'.format(soul))
-            print(soul)
+class Player:
 
+    def __init__(self):
+        pyautogui.useImageNotFoundException()
 
-async def Run():
-    # NOME DO ARQUIVO
-    run = "run.png"
-    x = True
-    tentativa = 0
-    jumps = 0
-    runs = 0
-    cash_values = [0, 0]
-    souls_values = [0, 0]
+    def jump(self):
+        pyautogui.keyDown('space')
+        pyautogui.keyUp('space')
 
-    while x == True:
-        tentativa = tentativa + 1
-        print('Tentativa: ', tentativa)
-        # await getCash(tentativa, cash_values)
-        # await getSouls(tentativa, souls_values)
+    def boost(self, x, y):
+        # pyautogui.press('shiftleft')
+        self.jump()
+        pyautogui.click(x + 60, y + 160)
+        pyautogui.moveTo(x + 100, y)
 
+    def identifyBoost(self, screen):
+        run = "run.png"
+        img_rgb = cv2.imread(run)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
         try:
-            if os.path.exists(run):
-                pyautogui.locateOnScreen(
-                    run, confidence=0.99, grayscale=True, region=(649, 698, 200, 200)
-                )  # type: ignore
-                print("clicking on run...")
+            res = cv2.matchTemplate(
+                img_rgb, screen, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.99
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                return pt
+        except:
+            print("Run not found")
 
-                pyautogui.click(x=762, y=798)
-                runs = runs + 1
-                time.sleep(1)
+    def identifyCoin(self, mask, roi):
+        coin = "coin.png"
+        img_rgb = cv2.imread(coin)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(coin, cv2.IMREAD_GRAYSCALE)
+        w, h = template.shape[::-1]
+        try:
+            res = cv2.matchTemplate(
+                img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.5125
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                cv2.rectangle(
+                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                cv2.putText(
+                    roi, coin, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                return coin
+        except:
+            print("Coin not found")
 
-        except KeyboardInterrupt:
-            break
+    def identifyBox(self, mask, roi):
+        box = "box.png"
+        img_rgb = cv2.imread(box)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(box, cv2.IMREAD_GRAYSCALE)
+        w, h = template.shape[::-1]
+        try:
+            res = cv2.matchTemplate(
+                img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.53
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                cv2.rectangle(
+                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                cv2.putText(
+                    roi, box, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                return box
 
-        except pyautogui.ImageNotFoundException:
-            print("jumping for money...")
-            jumps = jumps + 1
-            pyautogui.mouseDown(x=964, y=783)
-            time.sleep(0.02)
-            pyautogui.mouseUp(x=964, y=783)
-            continue
-
-    alert(text="Total Jumps: {}. Total Boosts: {}. Total de Ações: {}".format(
-        jumps, runs, tentativa), title="Game Finished!", button="OK")
-    sys.exit(0)
-
-asyncio.run(Run())
+        except:
+            print("Box not found")
