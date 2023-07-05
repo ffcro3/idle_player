@@ -24,7 +24,7 @@ while True:
     height, width, _ = frame.shape
 
     # Extract Region of interest
-    roi = frame[100:, 220:510]
+    roi = frame[100:, 220:490]
 
     # 1. Object Detection
     mask = object_detector.apply(roi)

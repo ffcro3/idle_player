@@ -51,13 +51,13 @@ class Player:
         try:
             res = cv2.matchTemplate(
                 img_gray, mask, cv2.TM_CCOEFF_NORMED)
-            threshold = 0.5125
+            threshold = 0.54225
             loc = np.where(res >= threshold)
             for pt in zip(*loc[::-1]):
-                cv2.rectangle(
-                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
-                cv2.putText(
-                    roi, coin, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                #     cv2.rectangle(
+                #         roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
+                #     cv2.putText(
+                #         roi, coin, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 return coin
         except:
             print("Coin not found")
