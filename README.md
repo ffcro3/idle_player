@@ -15,7 +15,7 @@ pip install pyautogui pymsgbox asyncio pytesseract
 ## Usage
 
 ```python
-python .\Player.py
+python .\screen_playing.py
 
 ```
 ## Demo
