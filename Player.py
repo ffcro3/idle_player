@@ -17,6 +17,9 @@ class Player:
     def __init__(self):
         pyautogui.useImageNotFoundException()
 
+    def click(self, x, y):
+        pyautogui.click(x + 20, y + 160)
+
     def jump(self):
         pyautogui.keyDown('space')
         pyautogui.keyUp('space')
@@ -39,9 +42,26 @@ class Player:
             for pt in zip(*loc[::-1]):
                 return pt
         except:
-            print("Run not found")
+            print("Boost not found")
 
-    def identifyCoin(self, mask, roi):
+    def identifyOrb(self, mask):
+        orb = "bonus_orb.png"
+        img_rgb = cv2.imread(orb)
+        assert img_rgb is not None, "file could not be read, check with os.path.exists()"
+        img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(orb, cv2.IMREAD_GRAYSCALE)
+        w, h = template.shape[::-1]
+        try:
+            res = cv2.matchTemplate(
+                img_gray, mask, cv2.TM_CCOEFF_NORMED)
+            threshold = 0.54225
+            loc = np.where(res >= threshold)
+            for pt in zip(*loc[::-1]):
+                return orb
+        except:
+            print("Orb not found")
+
+    def identifyCoin(self, mask):
         coin = "coin.png"
         img_rgb = cv2.imread(coin)
         assert img_rgb is not None, "file could not be read, check with os.path.exists()"
@@ -54,15 +74,11 @@ class Player:
             threshold = 0.54225
             loc = np.where(res >= threshold)
             for pt in zip(*loc[::-1]):
-                #     cv2.rectangle(
-                #         roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
-                #     cv2.putText(
-                #         roi, coin, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 return coin
         except:
             print("Coin not found")
 
-    def identifyBox(self, mask, roi):
+    def identifyBox(self, mask):
         box = "box.png"
         img_rgb = cv2.imread(box)
         assert img_rgb is not None, "file could not be read, check with os.path.exists()"
@@ -75,11 +91,18 @@ class Player:
             threshold = 0.53
             loc = np.where(res >= threshold)
             for pt in zip(*loc[::-1]):
-                cv2.rectangle(
-                    roi, pt, (pt[0] + w, pt[1] + h), (255, 255, 255), 2)
-                cv2.putText(
-                    roi, box, (pt[0], pt[1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 return box
 
         except:
             print("Box not found")
+
+    def Swipe(self, start, stop):
+        pyautogui.mouseDown(start[0] + 10, start[1] + 160)
+        pyautogui.moveTo(stop[0] + 10, start[1] + 160)
+        pyautogui.mouseUp(stop[0] + 10, start[1] + 160)
+
+    def SwipeInverse(self, start, stop):
+        pass
+
+    def IdentifyOrientationBonus(self):
+        pass
