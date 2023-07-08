@@ -1,4 +1,8 @@
-from OCR import *
+from screenCapture import setInterval, capture
+import threading
 
-ocr = OCR()
-data_info = ocr.getStats("stat.png")
+x = 1
+fps = 1/20
+screen = setInterval(fps, capture)
+t = threading.Timer(10, setInterval.cancel)
+t.start()

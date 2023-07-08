@@ -77,7 +77,7 @@ class OCR:
 
         if tentativa == 43:
             stat_ss = pyautogui.screenshot(region=(823, 281, 1234, 764))
-            self.getCashStart(stat_ss)
+            # self.getCashStart(stat_ss)
 
         if tentativa == 44:
             upgrade = self.find_ui(screen, "upgrades.png")
